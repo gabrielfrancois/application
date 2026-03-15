@@ -4,3 +4,6 @@ WARNING:__main__:max features : sqrt
 DEBUG:__main__:number of tree: 20
 INFO:__main__:max depth : None
 WARNING:__main__:max features : sqrt
+DEBUG:__main__:number of tree: 20
+INFO:__main__:max depth : None
+WARNING:__main__:max features : sqrt

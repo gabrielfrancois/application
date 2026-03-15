@@ -1,5 +1,8 @@
 import os
 import argparse
+import logging
+from dotenv import load_dotenv
+
 import duckdb
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
@@ -10,8 +13,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from dotenv import load_dotenv
-import logging
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
@@ -33,7 +35,7 @@ logger.debug(f'number of tree: {n_tree}')
 logger.info(f'max depth : {max_depth}')
 logger.warning(f'max features : {max_features}')
 
-os.chdir("/home/onyxia/work/application/data/raw")
+os.chdir("/home/onyxia/work/ensae-reproductibilite/data/raw")
 titanic = pd.read_csv("data.csv")
 
 con = duckdb.connect(database=":memory:")
