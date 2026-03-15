@@ -1,0 +1,3 @@
+"""
+Fonctions pour le projet
+"""
