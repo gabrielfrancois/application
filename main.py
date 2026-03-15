@@ -11,6 +11,10 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
 
 load_dotenv()
 JETON_API = os.environ["JETON_API"]
@@ -21,9 +25,15 @@ parser.add_argument("--max_features", type=str, default="sqrt")
 
 args = parser.parse_args()
 n_tree = args.n_tree
+max_depth = args.max_depth
+max_features = args.max_features
 print(f"number of tree: {n_tree}")
 
-os.chdir("/home/onyxia/work/application")
+logger.debug(f'number of tree: {n_tree}')
+logger.info(f'max depth : {max_depth}')
+logger.warning(f'max features : {max_features}')
+
+os.chdir("/home/onyxia/work/application/data/raw")
 titanic = pd.read_csv("data.csv")
 
 con = duckdb.connect(database=":memory:")
