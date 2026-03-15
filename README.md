@@ -1,0 +1,1 @@
+Don't forget to add a .env file with the variable JETON_API inside.

@@ -1,18 +1,31 @@
-import pandas as pd ; import numpy as np
-import matplotlib.pyplot as plt
-import multiprocessing
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+import os
+import argparse
+import duckdb
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
-import pathlib
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
-import time
-import os
+from sklearn.metrics import confusion_matrix
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from dotenv import load_dotenv
 
-os.chdir('/home/onyxia/work/application')
-titanic = pd.read_csv('data.csv')
+load_dotenv()
+JETON_API = os.environ["JETON_API"]
+parser = argparse.ArgumentParser(description="Hyperparrameters")
+parser.add_argument("--n_tree", type=int, default=20, help="number of tree for random forest")
+parser.add_argument("--max_depth", type=int, default=None, help="maximum depth for random forest")
+parser.add_argument("--max_features", type=str, default="sqrt")
 
-import duckdb
+args = parser.parse_args()
+n_tree = args.n_tree
+print(f"number of tree: {n_tree}")
+
+os.chdir("/home/onyxia/work/application")
+titanic = pd.read_csv("data.csv")
+
 con = duckdb.connect(database=":memory:")
 
 # Check la structure de Name "Nom, Prénom"
@@ -27,58 +40,55 @@ if bad == 0:
 else:
     print(f"Problème dans la colonne Name: {bad} ne se décomposent pas en 2 parties.")
 
+numeric_features = ["Age", "Fare"]
+categorical_features = ["Embarked", "Sex"]
 
-n_trees = 20
-max_depth =None
-max_features='sqrt'
+numeric_transformer = Pipeline(
+    steps=[
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", MinMaxScaler()),
+    ]
+)
 
-
-## Encoder les données imputées ou transformées.
-from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
-
-numeric_features=["Age", "Fare"]
-categorical_features=["Embarked", "Sex"]
-
-numeric_transformer = Pipeline(steps=[("imputer", SimpleImputer(strategy="median")),
-("scaler", MinMaxScaler()),])
-
-categorical_transformer = Pipeline(steps=[("imputer", SimpleImputer(strategy="most_frequent")),("onehot", OneHotEncoder()),])
+categorical_transformer = Pipeline(
+    steps=[
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("onehot", OneHotEncoder()),
+    ]
+)
 
 
 preprocessor = ColumnTransformer(
-transformers=[
-("Preprocessing numerical", numeric_transformer, numeric_features),
-(
-"Preprocessing categorical",
-categorical_transformer,
-categorical_features,
-),
-        ]
-    )
+    transformers=[
+        ("Preprocessing numerical", numeric_transformer, numeric_features),
+        (
+            "Preprocessing categorical",
+            categorical_transformer,
+            categorical_features,
+        ),
+    ]
+)
 
 pipe = Pipeline(
-        [
-            ("preprocessor", preprocessor),
-            ("classifier", RandomForestClassifier(n_estimators=20)),
-        ]
-    )
-
+    [
+        ("preprocessor", preprocessor),
+        ("classifier", RandomForestClassifier(n_estimators=20)),
+    ]
+)
 
 
 # splitting samples
 y = titanic["Survived"]
-X = titanic.drop("Survived", axis = 'columns')
+X = titanic.drop("Survived", axis="columns")
 
-# On _split_ notre _dataset_ d'apprentisage pour faire de la validation croisée une partie pour apprendre une partie pour regarder le score.
+# split train dataset: -> validation croisée une partie apprendre l'autre score.
 # Prenons arbitrairement 10% du dataset en test et 90% pour l'apprentissage.
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
 
 # check que pas de problème de data leakage
-if set(X_train["Embarked"].dropna().unique()) - set(X_test["Embarked"].dropna().unique()):
+if set(X_train["Embarked"].dropna().unique()) - set(
+    X_test["Embarked"].dropna().unique()
+):
     message = "Problème de data leakage pour la variable Embarked"
 else:
     message = "Pas de problème de data leakage pour la variable Embarked"
@@ -91,10 +101,6 @@ else:
     message = "Pas de problème de data leakage pour la variable Embarked"
 
 print(message)
-
-
-
-jetonapi = "$trotskitueleski1917"
 
 # Vérifie les valeurs manquantes
 # TODO: généraliser à toutes les variables
@@ -120,27 +126,16 @@ message_warn = f"{n_missing} valeurs manquantes pour la variable Age"
 message = message_ok if n_missing == 0 else message_warn
 print(message)
 
-
-# Random Forest
-
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import RandomForestClassifier
-
-
-#Ici demandons d'avoir 20 arbres
+# Ici demandons d'avoir 20 arbres
 pipe.fit(X_train, y_train)
 
 
-#calculons le score sur le dataset d'apprentissage et sur le dataset de test (10% du dataset d'apprentissage mis de côté)
+# calculons du score ur le test et le train (10% du dataset d'apprentissage mis de côté)
 # le score étant le nombre de bonne prédiction
 rdmf_score = pipe.score(X_test, y_test)
 rdmf_score_tr = pipe.score(X_train, y_train)
 print(f"{rdmf_score:.1%} de bonnes réponses sur les données de test pour validation")
-from sklearn.metrics import confusion_matrix
-print(20*"-")
+
+print(20 * "-")
 print("matrice de confusion")
 print(confusion_matrix(y_test, pipe.predict(X_test)))
-
-
