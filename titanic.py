@@ -9,10 +9,10 @@ from sklearn.ensemble import RandomForestClassifier
 import time
 import os
 
-os.chdir('/home/coder/work/ensae-reproductibilite-application')
+os.chdir('/home/onyxia/work/application')
 titanic = pd.read_csv('data.csv')
 
-
+import duckdb
 con = duckdb.connect(database=":memory:")
 
 # Check la structure de Name "Nom, Prénom"
